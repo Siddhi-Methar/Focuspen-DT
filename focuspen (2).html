@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>FocusPen — Smart Writing Companion</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Nunito+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FFF8F0;
+    --cream2: #FFF2E4;
+    --sage: #E8F5EE;
+    --mint: #D4F0E0;
+    --teal: #2DBD8F;
+    --teal-dark: #1E9970;
+    --teal-light: #7EDFC0;
+    --amber: #FFB347;
+    --amber-dark: #E8952A;
+    --coral: #FF7A6B;
+    --sky: #5BB8F5;
+    --lavender: #B8A9F8;
+    --card: #FFFFFF;
+    --text: #2D3436;
+    --text2: #636E72;
+    --text3: #B2BEC3;
+    --border: rgba(0,0,0,0.07);
+    --shadow: 0 4px 24px rgba(0,0,0,0.08);
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+    --radius: 20px;
+    --radius-sm: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Nunito Sans', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* === LAYOUT === */
+  .app {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    grid-template-rows: 64px 1fr;
+    height: 100vh;
+    gap: 0;
+  }
+
+  /* === HEADER === */
+  .header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 10;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .brand-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(45,189,143,0.35);
+  }
+
+  .brand-name {
+    font-family: 'Nunito', sans-serif;
+    font-size: 20px; font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+
+  .brand-name span { color: var(--teal); }
+
+  .header-center {
+    display: flex; align-items: center; gap: 8px;
+    position: absolute; left: 50%; transform: translateX(-50%);
+  }
+
+  .session-pill {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--sage);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px; font-weight: 700;
+    color: var(--teal-dark);
+  }
+
+  .session-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--teal);
+  }
+
+  .session-dot.pulse { animation: dotPulse 1.4s ease-in-out infinite; }
+  .session-dot.idle { background: var(--amber); animation: none; }
+  .session-dot.off { background: var(--text3); animation: none; }
+
+  @keyframes dotPulse {
+    0%,100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.4); opacity: 0.6; }
+  }
+
+  .header-actions { display: flex; gap: 8px; }
+
+  .btn {
+    padding: 8px 18px;
+    border-radius: 12px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.18s ease;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text2);
+    border: 1.5px solid var(--border);
+  }
+  .btn-ghost:hover { background: var(--cream2); border-color: var(--text3); }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+    color: white;
+    box-shadow: 0 3px 12px rgba(45,189,143,0.4);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(45,189,143,0.5); }
+  .btn-primary:active { transform: translateY(0); }
+
+  /* === WRITING AREA === */
+  .writing-section {
+    background: var(--cream);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: hidden;
+  }
+
+  .writing-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--card);
+    border-radius: 14px;
+    padding: 8px 14px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .pen-colors {
+    display: flex; gap: 6px; align-items: center;
+  }
+
+  .color-dot {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    border: 2px solid transparent;
+  }
+
+  .color-dot:hover { transform: scale(1.2); }
+  .color-dot.active { border-color: var(--text); transform: scale(1.1); }
+
+  .toolbar-sep {
+    width: 1px; height: 20px;
+    background: var(--border);
+    margin: 0 6px;
+  }
+
+  .pen-sizes {
+    display: flex; gap: 5px; align-items: center;
+  }
+
+  .size-dot {
+    border-radius: 50%;
+    background: var(--text);
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.15s;
+    opacity: 0.3;
+  }
+
+  .size-dot.active { opacity: 1; transform: scale(1.15); }
+  .size-dot:hover { opacity: 0.7; }
+
+  .toolbar-right { display: flex; gap: 6px; }
+
+  .tool-btn {
+    padding: 5px 12px;
+    border-radius: 8px;
+    background: var(--cream);
+    border: 1.5px solid var(--border);
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px; font-weight: 700;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tool-btn:hover { background: var(--cream2); color: var(--text); }
+
+  .canvas-wrapper {
+    flex: 1;
+    background: var(--card);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+    cursor: crosshair;
+  }
+
+  .canvas-paper {
+    position: absolute; inset: 0;
+    background-image:
+      repeating-linear-gradient(transparent, transparent 31px, rgba(45,189,143,0.12) 31px, rgba(45,189,143,0.12) 32px);
+    background-position: 0 20px;
+  }
+
+  .canvas-margin {
+    position: absolute;
+    left: 48px; top: 0; bottom: 0;
+    width: 1px;
+    background: rgba(255, 150, 150, 0.2);
+  }
+
+  #mainCanvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    touch-action: none;
+  }
+
+  .canvas-prompt {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    pointer-events: none;
+    transition: opacity 0.5s;
+  }
+
+  .canvas-prompt.hidden { opacity: 0; }
+
+  .prompt-icon {
+    font-size: 40px;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .prompt-text {
+    font-family: 'Nunito', sans-serif;
+    font-size: 16px; font-weight: 700;
+    color: var(--text3);
+  }
+
+  .prompt-sub {
+    font-size: 13px; color: var(--text3);
+  }
+
+  /* === SIDEBAR === */
+  .sidebar {
+    background: var(--cream2);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--text3); border-radius: 2px; }
+
+  /* === PANDA CARD === */
+  .panda-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 20px 16px 16px;
+    box-shadow: var(--shadow-sm);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .panda-bg-circle {
+    position: absolute;
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    background: var(--sage);
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 0;
+  }
+
+  .panda-stage-label {
+    position: relative; z-index: 1;
+    font-family: 'Nunito', sans-serif;
+    font-size: 10px; font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--teal-dark);
+    background: var(--mint);
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+  }
+
+  .panda-container {
+    position: relative; z-index: 1;
+    height: 130px;
+    display: flex; align-items: flex-end; justify-content: center;
+    margin-bottom: 10px;
+  }
+
+  #pandaSvg {
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform-origin: bottom center;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));
+  }
+
+  #pandaSvg.bounce {
+    animation: pandaBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes pandaBounce {
+    0% { transform: scaleY(0.85) scaleX(1.05); }
+    50% { transform: scaleY(1.08) scaleX(0.96) translateY(-6px); }
+    100% { transform: scaleY(1) scaleX(1); }
+  }
+
+  #pandaSvg.idle-nod {
+    animation: pandaIdle 2.8s ease-in-out infinite;
+  }
+
+  @keyframes pandaIdle {
+    0%,100% { transform: rotate(0deg) translateY(0); }
+    25% { transform: rotate(-2deg) translateY(-2px); }
+    75% { transform: rotate(2deg) translateY(-2px); }
+  }
+
+  #pandaSvg.writing-wiggle {
+    animation: pandaWrite 0.3s ease-in-out infinite alternate;
+  }
+
+  @keyframes pandaWrite {
+    0% { transform: rotate(-1.5deg) translateX(-1px); }
+    100% { transform: rotate(1.5deg) translateX(1px); }
+  }
+
+  .panda-name {
+    font-family: 'Nunito', sans-serif;
+    font-size: 18px; font-weight: 900;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .panda-mood {
+    font-size: 13px; color: var(--text2);
+    margin-bottom: 12px;
+    min-height: 18px;
+  }
+
+  .xp-bar-wrap {
+    background: var(--cream);
+    border-radius: 10px;
+    height: 8px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+
+  .xp-bar {
+    height: 100%;
+    border-radius: 10px;
+    background: linear-gradient(90deg, var(--teal-light), var(--teal));
+    transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .xp-label {
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: var(--text3);
+    font-weight: 600;
+  }
+
+  /* === METRICS === */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .metric-tile {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 12px 12px 10px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .metric-icon {
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+
+  .metric-val {
+    font-family: 'Nunito', sans-serif;
+    font-size: 22px; font-weight: 900;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+
+  .metric-name {
+    font-size: 11px; color: var(--text2);
+    font-weight: 600;
+  }
+
+  /* === FOCUS RING === */
+  .focus-ring-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .ring-wrap { position: relative; width: 70px; height: 70px; flex-shrink: 0; }
+
+  .ring-wrap svg { transform: rotate(-90deg); }
+
+  .ring-num {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Nunito', sans-serif;
+    font-size: 18px; font-weight: 900;
+  }
+
+  .focus-info { flex: 1; }
+
+  .focus-label {
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px; font-weight: 800;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .focus-bar-wrap {
+    background: var(--cream);
+    border-radius: 6px;
+    height: 5px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+
+  .focus-bar {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.6s ease, background 0.6s ease;
+    background: var(--teal);
+  }
+
+  .focus-state-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 11px; font-weight: 700;
+    transition: all 0.3s;
+  }
+
+  .focus-state-badge.engaged { background: var(--mint); color: var(--teal-dark); }
+  .focus-state-badge.idle { background: #FFF3E0; color: #E65100; }
+  .focus-state-badge.ready { background: var(--cream2); color: var(--text2); }
+
+  /* === ACTIVITY GRAPH === */
+  .activity-card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 12px 14px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .activity-title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px; font-weight: 800;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+  }
+
+  .activity-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 36px;
+  }
+
+  .act-bar {
+    flex: 1;
+    border-radius: 3px 3px 0 0;
+    min-height: 3px;
+    transition: height 0.4s ease, background 0.4s ease;
+  }
+
+  /* === ACHIEVEMENTS === */
+  .achievements-card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 12px 14px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .achievements-title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px; font-weight: 800;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+  }
+
+  .achievement-row {
+    display: flex; gap: 6px; flex-wrap: wrap;
+  }
+
+  .ach-badge {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    transition: all 0.3s;
+  }
+
+  .ach-badge.locked {
+    background: var(--cream);
+    filter: grayscale(1) opacity(0.4);
+  }
+
+  .ach-badge.unlocked {
+    background: linear-gradient(135deg, #FFF3CD, #FFE082);
+    box-shadow: 0 2px 8px rgba(255,179,71,0.4);
+    animation: achUnlock 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes achUnlock {
+    0% { transform: scale(0) rotate(-20deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+
+  /* === TOAST === */
+  #toastContainer {
+    position: fixed;
+    bottom: 24px; left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex; flex-direction: column-reverse; align-items: center; gap: 8px;
+  }
+
+  .toast {
+    background: var(--text);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 14px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+    animation: toastIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    white-space: nowrap;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    max-width: 320px;
+  }
+
+  .toast.success { background: linear-gradient(135deg, var(--teal), var(--teal-dark)); }
+  .toast.celebrate { background: linear-gradient(135deg, var(--amber), var(--amber-dark)); }
+  .toast.level-up { background: linear-gradient(135deg, var(--lavender), #9B8FE0); }
+
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.9); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  @keyframes toastOut {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to { opacity: 0; transform: translateY(-10px) scale(0.9); }
+  }
+
+  /* === CELEBRATION OVERLAY === */
+  #celebOverlay {
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 999;
+    display: none;
+  }
+
+  .confetti {
+    position: absolute;
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    animation: confettiFall linear forwards;
+  }
+
+  @keyframes confettiFall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* === LEVEL UP SPLASH === */
+  #levelSplash {
+    position: fixed; inset: 0;
+    background: rgba(255,255,255,0.92);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 998;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .splash-panda { font-size: 80px; animation: splashBounce 0.6s cubic-bezier(0.34,1.56,0.64,1); }
+  .splash-title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 36px; font-weight: 900;
+    color: var(--text);
+  }
+  .splash-sub {
+    font-size: 18px; color: var(--text2);
+    font-weight: 600;
+  }
+
+  @keyframes splashBounce {
+    0% { transform: scale(0.3) rotate(-15deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+
+  /* === SCROLLBAR for mobile === */
+  @media (max-width: 768px) {
+    .app {
+      grid-template-columns: 1fr;
+      grid-template-rows: 56px 1fr 280px;
+      overflow: auto;
+    }
+    .sidebar {
+      border-left: none;
+      border-top: 1px solid var(--border);
+      flex-direction: row;
+      overflow-x: auto;
+      padding: 12px;
+    }
+    .panda-card { min-width: 200px; }
+    .metrics-grid { min-width: 260px; }
+    .focus-ring-card { min-width: 240px; }
+    .activity-card { min-width: 180px; }
+    .achievements-card { min-width: 180px; }
+    .header-center { display: none; }
+  }
+
+  /* writing mode line hint */
+  .lined-hint {
+    font-size: 11px;
+    color: rgba(45,189,143,0.5);
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    position: absolute;
+    right: 16px;
+    top: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M6 16 L10 5 L11 5 L15 16" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <path d="M7.5 11.5 L12.5 11.5" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="15.5" cy="4.5" r="2" fill="white"/>
+        </svg>
+      </div>
+      <span class="brand-name">Focus<span>Pen</span></span>
+    </div>
+    <div class="header-center">
+      <div class="session-pill">
+        <div class="status-dot off" id="sessionDot"></div>
+        <span id="sessionLabel">No session</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost" onclick="clearCanvas()">🗑 Clear</button>
+      <button class="btn btn-primary" id="mainBtn" onclick="toggleSession()">▶ Start Session</button>
+    </div>
+  </header>
+
+  <!-- WRITING AREA -->
+  <section class="writing-section">
+    <div class="writing-toolbar">
+      <div class="pen-colors">
+        <div class="color-dot active" style="background:#2D3436" data-c="#2D3436" onclick="setPen(this,'color')"></div>
+        <div class="color-dot" style="background:#185FA5" data-c="#185FA5" onclick="setPen(this,'color')"></div>
+        <div class="color-dot" style="background:#993556" data-c="#993556" onclick="setPen(this,'color')"></div>
+        <div class="color-dot" style="background:#3B6D11" data-c="#3B6D11" onclick="setPen(this,'color')"></div>
+        <div class="color-dot" style="background:#854F0B" data-c="#854F0B" onclick="setPen(this,'color')"></div>
+        <div class="toolbar-sep"></div>
+        <div class="pen-sizes">
+          <div class="size-dot" style="width:6px;height:6px" data-s="1.5" onclick="setPen(this,'size')"></div>
+          <div class="size-dot active" style="width:9px;height:9px" data-s="2.5" onclick="setPen(this,'size')"></div>
+          <div class="size-dot" style="width:13px;height:13px" data-s="4" onclick="setPen(this,'size')"></div>
+          <div class="size-dot" style="width:17px;height:17px" data-s="6" onclick="setPen(this,'size')"></div>
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <button class="tool-btn" onclick="undoLast()">↩ Undo</button>
+        <button class="tool-btn" onclick="toggleEraser()">✏ Eraser</button>
+      </div>
+    </div>
+
+    <div class="canvas-wrapper" id="canvasWrapper">
+      <div class="canvas-paper"></div>
+      <div class="canvas-margin"></div>
+      <canvas id="mainCanvas"></canvas>
+      <div class="canvas-prompt" id="canvasPrompt">
+        <div class="prompt-icon">✍️</div>
+        <div class="prompt-text">Start a session, then write here</div>
+        <div class="prompt-sub">Stylus or mouse · Any text or notes</div>
+      </div>
+      <div class="lined-hint">📄 Lined paper</div>
+    </div>
+  </section>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <!-- PANDA -->
+    <div class="panda-card">
+      <div class="panda-bg-circle"></div>
+      <div class="panda-stage-label" id="stageLabel">Baby Cub</div>
+      <div class="panda-container">
+        <svg id="pandaSvg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div class="panda-name" id="pandaName">Bao Bao</div>
+      <div class="panda-mood" id="pandaMood">Waiting for you to write... 🍃</div>
+      <div class="xp-bar-wrap">
+        <div class="xp-bar" id="xpBar" style="width:0%"></div>
+      </div>
+      <div class="xp-label">
+        <span>Lv <span id="lvNum">1</span></span>
+        <span><span id="xpCur">0</span> / <span id="xpMax">100</span> XP</span>
+      </div>
+    </div>
+
+    <!-- FOCUS RING -->
+    <div class="focus-ring-card">
+      <div class="ring-wrap">
+        <svg width="70" height="70" viewBox="0 0 70 70">
+          <circle cx="35" cy="35" r="28" fill="none" stroke="#F0F0F0" stroke-width="7"/>
+          <circle cx="35" cy="35" r="28" fill="none" stroke="var(--teal)" stroke-width="7"
+            id="focusCircle"
+            stroke-dasharray="175.9" stroke-dashoffset="175.9"
+            stroke-linecap="round"
+            style="transition: stroke-dashoffset 0.8s ease, stroke 0.6s ease;"/>
+        </svg>
+        <div class="ring-num" id="focusNum">0</div>
+      </div>
+      <div class="focus-info">
+        <div class="focus-label">Focus Score</div>
+        <div class="focus-bar-wrap">
+          <div class="focus-bar" id="focusBar" style="width:0%"></div>
+        </div>
+        <div class="focus-state-badge ready" id="focusBadge">
+          <span id="focusBadgeDot">●</span>
+          <span id="focusBadgeText">Ready</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- METRICS GRID -->
+    <div class="metrics-grid">
+      <div class="metric-tile">
+        <div class="metric-icon">⏱</div>
+        <div class="metric-val" id="mTime">0:00</div>
+        <div class="metric-name">Write time</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-icon">🔥</div>
+        <div class="metric-val" id="mStreak">0s</div>
+        <div class="metric-name">Streak</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-icon">✏️</div>
+        <div class="metric-val" id="mStrokes">0</div>
+        <div class="metric-name">Strokes</div>
+      </div>
+      <div class="metric-tile">
+        <div class="metric-icon">📝</div>
+        <div class="metric-val" id="mWords">~0</div>
+        <div class="metric-name">Est. words</div>
+      </div>
+    </div>
+
+    <!-- ACTIVITY GRAPH -->
+    <div class="activity-card">
+      <div class="activity-title">Activity · last 30s</div>
+      <div class="activity-bars" id="actBars"></div>
+    </div>
+
+    <!-- ACHIEVEMENTS -->
+    <div class="achievements-card">
+      <div class="achievements-title">Achievements</div>
+      <div class="achievement-row" id="achRow"></div>
+    </div>
+
+  </aside>
+</div>
+
+<!-- TOAST -->
+<div id="toastContainer"></div>
+
+<!-- LEVEL UP SPLASH -->
+<div id="levelSplash">
+  <div class="splash-panda" id="splashEmoji">🐼</div>
+  <div class="splash-title" id="splashTitle">Level Up!</div>
+  <div class="splash-sub" id="splashSub">Bao Bao is growing!</div>
+</div>
+
+<!-- CONFETTI OVERLAY -->
+<div id="celebOverlay"></div>
+
+<script>
+/* ==========================================
+   FOCUSPEN — FULL INTERACTIVE PROTOTYPE
+   ========================================== */
+
+// === STATE ===
+const state = {
+  session: false,
+  drawing: false,
+  penColor: '#2D3436',
+  penSize: 2.5,
+  eraser: false,
+  sessionStart: null,
+  totalWriteMs: 0,
+  writeStart: null,
+  isWriting: false,
+  idleTimer: null,
+  strokes: 0,
+  strokeHistory: [],
+  currentStroke: [],
+  score: 0,
+  xp: 0,
+  level: 1,
+  streak: 0,
+  streakTimer: null,
+  idlePauses: 0,
+  activityBuckets: new Array(30).fill(0),
+  currentBucketActivity: 0,
+  achievements: {},
+  pandaState: 'idle', // idle | writing | happy | sleeping
+  lastX: 0, lastY: 0,
+  pixelsDrawn: 0,
+  undoStack: [],
+  totalLines: 0,
+};
+
+const LEVELS = [
+  { name: 'Baby Cub', emoji: '🐼', xpNeeded: 100, mood_idle: "Waiting for you to write... 🍃", mood_write: "Writing! Keep going! ✏️", mood_happy: "Yay! Great job! 🎉", stageKey: 'cub' },
+  { name: 'Young Panda', emoji: '🐼', xpNeeded: 250, mood_idle: "Come back soon! 🌿", mood_write: "So focused! Amazing! 🌟", mood_happy: "Wonderful streak! 🔥", stageKey: 'young' },
+  { name: 'Panda Scholar', emoji: '🎓', xpNeeded: 500, mood_idle: "Rest well, then write more 📚", mood_write: "Deep focus unlocked! 📖", mood_happy: "You're a true scholar! ✨", stageKey: 'scholar' },
+  { name: 'Panda Master', emoji: '🏆', xpNeeded: 999999, mood_idle: "The master rests... 🌙", mood_write: "Peak performance! 🚀", mood_happy: "Legendary focus! 🏆", stageKey: 'master' },
+];
+
+const ACHIEVEMENTS = [
+  { id: 'first_stroke', emoji: '✏️', name: 'First Stroke', desc: 'Write your first stroke' },
+  { id: 'streak_30', emoji: '🔥', name: 'On Fire', desc: '30s writing streak' },
+  { id: 'words_50', emoji: '📝', name: 'Wordsmith', desc: '~50 words written' },
+  { id: 'score_80', emoji: '⭐', name: 'Star Student', desc: 'Score 80+' },
+  { id: 'level_2', emoji: '🐾', name: 'Growing Up', desc: 'Reach level 2' },
+  { id: 'level_3', emoji: '🎓', name: 'Scholar', desc: 'Reach level 3' },
+  { id: 'level_4', emoji: '🏆', name: 'Panda Master', desc: 'Reach level 4' },
+  { id: 'session_5', emoji: '📅', name: 'Dedicated', desc: '5+ min session' },
+];
+
+// === CANVAS SETUP ===
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const wrapper = document.getElementById('canvasWrapper');
+  const rect = wrapper.getBoundingClientRect();
+  // Save current drawing
+  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+  ctx.putImageData(imgData, 0, 0);
+}
+
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  let x, y, pressure = 0.5;
+  if (e.touches && e.touches[0]) {
+    x = e.touches[0].clientX - rect.left;
+    y = e.touches[0].clientY - rect.top;
+    pressure = e.touches[0].force || 0.5;
+  } else if (e.pointerType) {
+    x = e.clientX - rect.left;
+    y = e.clientY - rect.top;
+    pressure = e.pressure || 0.5;
+  } else {
+    x = e.clientX - rect.left;
+    y = e.clientY - rect.top;
+  }
+  return { x, y, pressure };
+}
+
+let lastPointerPos = null;
+let lastPointerTime = null;
+
+function onPointerDown(e) {
+  if (!state.session) return;
+  e.preventDefault();
+  state.drawing = true;
+  const pos = getPos(e);
+  state.lastX = pos.x;
+  state.lastY = pos.y;
+  state.currentStroke = [pos];
+  lastPointerPos = pos;
+  lastPointerTime = Date.now();
+
+  ctx.beginPath();
+  ctx.moveTo(pos.x, pos.y);
+
+  // Save undo
+  if (state.undoStack.length > 20) state.undoStack.shift();
+  state.undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+}
+
+function onPointerMove(e) {
+  if (!state.drawing || !state.session) return;
+  e.preventDefault();
+  const pos = getPos(e);
+
+  const dx = pos.x - state.lastX;
+  const dy = pos.y - state.lastY;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+
+  // Ignore tiny jitters (accidental taps)
+  if (dist < 2) return;
+
+  // Line width varies with pressure & speed
+  const speed = lastPointerPos ? Math.sqrt(
+    Math.pow(pos.x - lastPointerPos.x, 2) + Math.pow(pos.y - lastPointerPos.y, 2)
+  ) / Math.max(1, Date.now() - lastPointerTime) * 10 : 1;
+
+  const pressure = pos.pressure || 0.5;
+  const lineW = state.eraser
+    ? 24
+    : state.penSize * (0.5 + pressure * 0.8) * Math.max(0.6, 1 - speed * 0.04);
+
+  ctx.strokeStyle = state.eraser ? '#FFFFFF' : state.penColor;
+  ctx.lineWidth = Math.max(1, Math.min(state.penSize * 2, lineW));
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  ctx.lineTo(pos.x, pos.y);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(pos.x, pos.y);
+
+  state.currentStroke.push(pos);
+  state.lastX = pos.x;
+  state.lastY = pos.y;
+  state.pixelsDrawn += dist;
+  state.currentBucketActivity += dist;
+  lastPointerPos = pos;
+  lastPointerTime = Date.now();
+
+  if (!state.eraser) onWritingActivity(dist);
+}
+
+function onPointerUp(e) {
+  if (!state.drawing) return;
+  state.drawing = false;
+
+  const strokeLen = state.currentStroke.reduce((acc, p, i) => {
+    if (i === 0) return 0;
+    const prev = state.currentStroke[i - 1];
+    return acc + Math.sqrt(Math.pow(p.x - prev.x, 2) + Math.pow(p.y - prev.y, 2));
+  }, 0);
+
+  // Ignore tiny accidental taps
+  if (strokeLen < 8) return;
+
+  state.strokes++;
+  state.strokeHistory.push({ len: strokeLen, t: Date.now() });
+
+  // Estimate words (rough: ~40px per character, 5 chars/word)
+  state.pixelsDrawn += strokeLen;
+  const estWords = Math.round(state.pixelsDrawn / 200);
+  document.getElementById('mStrokes').textContent = state.strokes;
+  document.getElementById('mWords').textContent = '~' + estWords;
+
+  checkAchievement('first_stroke');
+  if (estWords >= 50) checkAchievement('words_50');
+}
+
+canvas.addEventListener('pointerdown', onPointerDown);
+canvas.addEventListener('pointermove', onPointerMove);
+canvas.addEventListener('pointerup', onPointerUp);
+canvas.addEventListener('pointerleave', onPointerUp);
+canvas.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+canvas.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
+// === WRITING ACTIVITY ENGINE ===
+function onWritingActivity(dist) {
+  if (dist < 3) return; // ignore micro-jitter
+
+  if (!state.isWriting) {
+    state.isWriting = true;
+    state.writeStart = Date.now();
+    setPandaState('writing');
+    setFocusBadge('engaged');
+  }
+
+  clearTimeout(state.idleTimer);
+  state.idleTimer = setTimeout(onIdle, 3000);
+
+  // Streak
+  clearTimeout(state.streakTimer);
+  state.streak++;
+  state.streakTimer = setTimeout(() => { state.streak = 0; }, 4000);
+}
+
+function onIdle() {
+  if (!state.session) return;
+  state.isWriting = false;
+  if (state.writeStart) {
+    state.totalWriteMs += Date.now() - state.writeStart;
+    state.writeStart = null;
+  }
+  state.idlePauses++;
+  setPandaState('idle');
+  setFocusBadge('idle');
+
+  const msgs = [
+    "Take a breath 🌸 then keep going!",
+    "Bao Bao is waiting... pick up that pen! 🐼",
+    "Pen down detected — come back soon!",
+    "Short break? No worries! Resume when ready 😊",
+  ];
+  if (state.idlePauses % 2 === 1) {
+    showToast(msgs[state.idlePauses % msgs.length], 'info', '💤');
+  }
+}
+
+// === SESSION CONTROL ===
+function toggleSession() {
+  const btn = document.getElementById('mainBtn');
+  if (!state.session) {
+    startSession();
+    btn.textContent = '⏹ End Session';
+    btn.style.background = 'linear-gradient(135deg, #E24B4A, #A32D2D)';
+    btn.style.boxShadow = '0 3px 12px rgba(226,75,74,0.4)';
+  } else {
+    endSession();
+    btn.textContent = '▶ Start Session';
+    btn.style.background = '';
+    btn.style.boxShadow = '';
+  }
+}
+
+function startSession() {
+  state.session = true;
+  state.sessionStart = Date.now();
+  state.strokes = 0; state.idlePauses = 0; state.streak = 0;
+  state.totalWriteMs = 0; state.writeStart = null; state.isWriting = false;
+  state.pixelsDrawn = 0; state.score = 0;
+  state.activityBuckets = new Array(30).fill(0);
+  state.currentBucketActivity = 0;
+
+  document.getElementById('sessionDot').className = 'status-dot pulse';
+  document.getElementById('sessionLabel').textContent = 'Session active';
+  document.getElementById('canvasPrompt').classList.add('hidden');
+
+  setPandaState('idle');
+  setFocusBadge('ready');
+  showToast('Session started! Start writing ✍️', 'success', '🐼');
+  updatePanda();
+}
+
+function endSession() {
+  state.session = false;
+  if (state.writeStart) {
+    state.totalWriteMs += Date.now() - state.writeStart;
+    state.writeStart = null;
+  }
+  clearTimeout(state.idleTimer);
+  state.isWriting = false;
+
+  document.getElementById('sessionDot').className = 'status-dot off';
+  document.getElementById('sessionLabel').textContent = 'Session ended';
+  document.getElementById('canvasPrompt').classList.remove('hidden');
+
+  setPandaState('happy');
+  setFocusBadge('ready');
+
+  const mins = Math.floor(state.totalWriteMs / 60000);
+  const secs = Math.floor((state.totalWriteMs % 60000) / 1000);
+  showToast(`Session done! Write time: ${mins}m ${secs}s — Score: ${state.score}`, 'celebrate', '🏅');
+
+  if (state.totalWriteMs >= 5 * 60 * 1000) checkAchievement('session_5');
+  if (state.score >= 80) checkAchievement('score_80');
+
+  setTimeout(() => {
+    if (!state.session) setPandaState('idle');
+  }, 4000);
+}
+
+function clearCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  state.undoStack = [];
+  state.pixelsDrawn = 0;
+  state.strokes = 0;
+  document.getElementById('mStrokes').textContent = '0';
+  document.getElementById('mWords').textContent = '~0';
+}
+
+function undoLast() {
+  if (state.undoStack.length > 0) {
+    const img = state.undoStack.pop();
+    ctx.putImageData(img, 0, 0);
+    if (state.strokes > 0) state.strokes--;
+    document.getElementById('mStrokes').textContent = state.strokes;
+  }
+}
+
+let eraserActive = false;
+function toggleEraser() {
+  eraserActive = !eraserActive;
+  state.eraser = eraserActive;
+  const btn = document.querySelector('.tool-btn:last-child');
+  btn.textContent = eraserActive ? '✏ Pen' : '✏ Eraser';
+  btn.style.background = eraserActive ? '#FFE082' : '';
+  canvas.style.cursor = eraserActive ? 'cell' : 'crosshair';
+}
+
+function setPen(el, type) {
+  if (type === 'color') {
+    document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+    el.classList.add('active');
+    state.penColor = el.dataset.c;
+    state.eraser = false;
+    eraserActive = false;
+  } else {
+    document.querySelectorAll('.size-dot').forEach(d => d.classList.remove('active'));
+    el.classList.add('active');
+    state.penSize = parseFloat(el.dataset.s);
+  }
+}
+
+// === SCORE ENGINE ===
+function computeScore() {
+  if (!state.session || !state.sessionStart) return 0;
+  const elapsed = (Date.now() - state.sessionStart) / 1000;
+  if (elapsed < 3) return 0;
+
+  const active = state.totalWriteMs + (state.writeStart ? Date.now() - state.writeStart : 0);
+  const focusRatio = Math.min(1, active / (elapsed * 1000));
+  const strokeDensity = Math.min(1, state.strokes / (elapsed / 4));
+  const idlePenalty = Math.max(0.4, 1 - state.idlePauses * 0.06);
+
+  return Math.max(0, Math.min(100, Math.round(
+    (focusRatio * 0.55 + strokeDensity * 0.45) * idlePenalty * 100
+  )));
+}
+
+// === XP SYSTEM ===
+function addXP(amount) {
+  state.xp += amount;
+  const lvl = LEVELS[Math.min(state.level - 1, LEVELS.length - 1)];
+  const xpMax = lvl.xpNeeded;
+
+  if (state.xp >= xpMax && state.level < LEVELS.length) {
+    state.xp -= xpMax;
+    state.level++;
+    onLevelUp();
+  }
+
+  const newMax = LEVELS[Math.min(state.level - 1, LEVELS.length - 1)].xpNeeded;
+  const pct = Math.min(100, Math.round((state.xp / newMax) * 100));
+  document.getElementById('xpBar').style.width = pct + '%';
+  document.getElementById('xpCur').textContent = state.xp;
+  document.getElementById('xpMax').textContent = newMax;
+  document.getElementById('lvNum').textContent = state.level;
+}
+
+function onLevelUp() {
+  const lvl = LEVELS[Math.min(state.level - 1, LEVELS.length - 1)];
+  triggerConfetti();
+  const splash = document.getElementById('levelSplash');
+  document.getElementById('splashEmoji').textContent = lvl.emoji;
+  document.getElementById('splashTitle').textContent = 'Level ' + state.level + '!';
+  document.getElementById('splashSub').textContent = 'Bao Bao is now a ' + lvl.name + '!';
+  splash.style.display = 'flex';
+  setTimeout(() => { splash.style.display = 'none'; }, 2800);
+
+  document.getElementById('stageLabel').textContent = lvl.name;
+  updatePanda();
+
+  if (state.level === 2) checkAchievement('level_2');
+  if (state.level === 3) checkAchievement('level_3');
+  if (state.level === 4) checkAchievement('level_4');
+}
+
+// === PANDA STATE ===
+function setPandaState(s) {
+  state.pandaState = s;
+  const svg = document.getElementById('pandaSvg');
+  svg.className = '';
+  if (s === 'idle') {
+    svg.classList.add('idle-nod');
+    updateMood(LEVELS[Math.min(state.level-1, 3)].mood_idle);
+  } else if (s === 'writing') {
+    svg.classList.add('writing-wiggle');
+    updateMood(LEVELS[Math.min(state.level-1, 3)].mood_write);
+  } else if (s === 'happy') {
+    svg.classList.add('bounce');
+    updateMood(LEVELS[Math.min(state.level-1, 3)].mood_happy);
+    setTimeout(() => {
+      document.getElementById('pandaSvg').className = 'idle-nod';
+    }, 2000);
+  }
+}
+
+function updateMood(text) {
+  document.getElementById('pandaMood').textContent = text;
+}
+
+// === DRAW PANDA SVG ===
+function updatePanda() {
+  const lvl = state.level;
+  const svg = document.getElementById('pandaSvg');
+  const stage = Math.min(lvl - 1, 3);
+  const size = [80, 95, 108, 120][stage];
+  svg.setAttribute('viewBox', `0 0 120 120`);
+
+  // Panda variants by level
+  if (stage === 0) drawPandaCub(svg, size);
+  else if (stage === 1) drawPandaYoung(svg, size);
+  else if (stage === 2) drawPandaScholar(svg, size);
+  else drawPandaMaster(svg, size);
+}
+
+function makeSVG(tag, attrs) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  return el;
+}
+
+function drawPandaCub(svg, size) {
+  svg.innerHTML = '';
+  const g = makeSVG('g', { transform: `translate(${(120-size)/2}, ${120-size})` });
+
+  // Body
+  g.appendChild(makeSVG('ellipse', { cx: size/2, cy: size*0.72, rx: size*0.32, ry: size*0.28, fill: '#fff', stroke: '#2D3436', 'stroke-width': 2 }));
+  // Belly
+  g.appendChild(makeSVG('ellipse', { cx: size/2, cy: size*0.75, rx: size*0.18, ry: size*0.18, fill: '#F5F5F5' }));
+  // Head
+  g.appendChild(makeSVG('circle', { cx: size/2, cy: size*0.38, r: size*0.28, fill: '#fff', stroke: '#2D3436', 'stroke-width': 2 }));
+  // Ears
+  g.appendChild(makeSVG('circle', { cx: size*0.3, cy: size*0.16, r: size*0.1, fill: '#2D3436' }));
+  g.appendChild(makeSVG('circle', { cx: size*0.7, cy: size*0.16, r: size*0.1, fill: '#2D3436' }));
+  g.appendChild(makeSVG('circle', { cx: size*0.3, cy: size*0.16, r: size*0.06, fill: '#555' }));
+  g.appendChild(makeSVG('circle', { cx: size*0.7, cy: size*0.16, r: size*0.06, fill: '#555' }));
+  // Eye patches
+  g.appendChild(makeSVG('ellipse', { cx: size*0.38, cy: size*0.36, rx: size*0.09, ry: size*0.08, fill: '#2D3436' }));
+  g.appendChild(makeSVG('ellipse', { cx: size*0.62, cy: size*0.36, rx: size*0.09, ry: size*0.08, fill: '#2D3436' }));
+  // Eyes
+  g.appendChild(makeSVG('circle', { cx: size*0.38, cy: size*0.36, r: size*0.04, fill: '#fff' }));
+  g.appendChild(makeSVG('circle', { cx: size*0.62, cy: size*0.36, r: size*0.04, fill: '#fff' }));
+  g.appendChild(makeSVG('circle', { cx: size*0.395, cy: size*0.355, r: size*0.015, fill: '#2D3436' }));
+  g.appendChild(makeSVG('circle', { cx: size*0.635, cy: size*0.355, r: size*0.015, fill: '#2D3436' }));
+  // Nose
+  g.appendChild(makeSVG('ellipse', { cx: size/2, cy: size*0.43, rx: size*0.05, ry: size*0.035, fill: '#2D3436' }));
+  // Mouth
+  const mouth = makeSVG('path', { d: `M${size*0.44},${size*0.46} Q${size*0.5},${size*0.5} ${size*0.56},${size*0.46}`, fill: 'none', stroke: '#2D3436', 'stroke-width': 1.5, 'stroke-linecap': 'round' });
+  g.appendChild(mouth);
+  // Arms
+  g.appendChild(makeSVG('ellipse', { cx: size*0.22, cy: size*0.65, rx: size*0.08, ry: size*0.15, fill: '#fff', stroke: '#2D3436', 'stroke-width': 1.5, transform: `rotate(-15,${size*0.22},${size*0.65})` }));
+  g.appendChild(makeSVG('ellipse', { cx: size*0.78, cy: size*0.65, rx: size*0.08, ry: size*0.15, fill: '#fff', stroke: '#2D3436', 'stroke-width': 1.5, transform: `rotate(15,${size*0.78},${size*0.65})` }));
+  // Legs
+  g.appendChild(makeSVG('ellipse', { cx: size*0.37, cy: size*0.94, rx: size*0.1, ry: size*0.08, fill: '#2D3436' }));
+  g.appendChild(makeSVG('ellipse', { cx: size*0.63, cy: size*0.94, rx: size*0.1, ry: size*0.08, fill: '#2D3436' }));
+  // Cheeks
+  g.appendChild(makeSVG('circle', { cx: size*0.31, cy: size*0.43, r: size*0.055, fill: 'rgba(255,183,193,0.5)' }));
+  g.appendChild(makeSVG('circle', { cx: size*0.69, cy: size*0.43, r: size*0.055, fill: 'rgba(255,183,193,0.5)' }));
+
+  svg.appendChild(g);
+}
+
+function drawPandaYoung(svg, size) {
+  drawPandaCub(svg, size); // Same base, bigger
+  // Add bamboo
+  const g = svg.firstChild;
+  const cx = size*0.78;
+  g.appendChild(makeSVG('rect', { x: cx, y: size*0.52, width: size*0.06, height: size*0.3, rx: 3, fill: '#5DBB63' }));
+  g.appendChild(makeSVG('rect', { x: cx-size*0.01, y: size*0.6, width: size*0.08, height: size*0.025, rx: 2, fill: '#3B8C42' }));
+  g.appendChild(makeSVG('rect', { x: cx-size*0.01, y: size*0.7, width: size*0.08, height: size*0.025, rx: 2, fill: '#3B8C42' }));
+  // leaf
+  g.appendChild(makeSVG('ellipse', { cx: cx+size*0.1, cy: size*0.55, rx: size*0.08, ry: size*0.035, fill: '#7ED87F', transform: `rotate(-30,${cx+size*0.1},${size*0.55})` }));
+}
+
+function drawPandaScholar(svg, size) {
+  drawPandaYoung(svg, size);
+  // Add graduation cap
+  const g = svg.firstChild;
+  const hx = size/2;
+  const hy = size*0.12;
+  g.appendChild(makeSVG('rect', { x: hx-size*0.22, y: hy, width: size*0.44, height: size*0.07, rx: 3, fill: '#2D3436' }));
+  g.appendChild(makeSVG('polygon', { points: `${hx},${hy-size*0.05} ${hx-size*0.25},${hy+size*0.03} ${hx+size*0.25},${hy+size*0.03}`, fill: '#2D3436' }));
+  g.appendChild(makeSVG('circle', { cx: hx, cy: hy-size*0.04, r: size*0.02, fill: '#FFD700' }));
+  g.appendChild(makeSVG('line', { x1: hx+size*0.25, y1: hy+size*0.02, x2: hx+size*0.25, y2: hy+size*0.09, stroke: '#FFD700', 'stroke-width': 2 }));
+  g.appendChild(makeSVG('circle', { cx: hx+size*0.25, cy: hy+size*0.1, r: size*0.025, fill: '#FFD700' }));
+}
+
+function drawPandaMaster(svg, size) {
+  drawPandaScholar(svg, size);
+  // Crown instead of cap
+  const g = svg.firstChild;
+  // Stars
+  for (let i = 0; i < 3; i++) {
+    const star = makeSVG('text', { x: size*0.3 + i*size*0.2, y: size*0.08, 'font-size': size*0.08, 'text-anchor': 'middle', fill: '#FFD700' });
+    star.textContent = '★';
+    g.appendChild(star);
+  }
+}
+
+// === FOCUS BADGE ===
+function setFocusBadge(state_) {
+  const badge = document.getElementById('focusBadge');
+  const text = document.getElementById('focusBadgeText');
+  badge.className = 'focus-state-badge ' + state_;
+  if (state_ === 'engaged') text.textContent = 'Engaged';
+  else if (state_ === 'idle') text.textContent = 'Idle pause';
+  else text.textContent = 'Ready';
+}
+
+// === MAIN LOOP ===
+let lastXPGrant = 0;
+setInterval(() => {
+  if (!state.session) return;
+
+  // Score
+  state.score = computeScore();
+  const circ = document.getElementById('focusCircle');
+  const offset = 175.9 - (state.score / 100) * 175.9;
+  circ.style.strokeDashoffset = offset;
+  const scoreColor = state.score > 70 ? '#2DBD8F' : state.score > 40 ? '#FFB347' : '#E24B4A';
+  circ.style.stroke = scoreColor;
+  document.getElementById('focusNum').textContent = state.score;
+  document.getElementById('focusBar').style.width = state.score + '%';
+  document.getElementById('focusBar').style.background = scoreColor;
+
+  // Write time
+  const ms = state.totalWriteMs + (state.writeStart ? Date.now() - state.writeStart : 0);
+  const totalS = Math.floor(ms / 1000);
+  const m = Math.floor(totalS / 60), s = totalS % 60;
+  document.getElementById('mTime').textContent = m + ':' + String(s).padStart(2, '0');
+
+  // Streak
+  if (state.isWriting) {
+    state.streak++;
+    document.getElementById('mStreak').textContent = Math.floor(state.streak / 10) + 's';
+    if (state.streak / 10 >= 30) checkAchievement('streak_30');
+  }
+
+  // XP grant while writing
+  if (state.isWriting) {
+    const now = Date.now();
+    if (now - lastXPGrant > 2000) {
+      addXP(Math.ceil(state.score / 20) + 1);
+      lastXPGrant = now;
+    }
+  }
+}, 100);
+
+// Activity graph ticker
+setInterval(() => {
+  if (!state.session) return;
+  state.activityBuckets.push(state.currentBucketActivity);
+  state.activityBuckets.shift();
+  state.currentBucketActivity = 0;
+  updateActivityGraph();
+}, 1000);
+
+function updateActivityGraph() {
+  const container = document.getElementById('actBars');
+  const max = Math.max(1, ...state.activityBuckets);
+  const bars = container.querySelectorAll('.act-bar');
+  bars.forEach((b, i) => {
+    const v = state.activityBuckets[i];
+    const pct = Math.max(8, Math.round((v / max) * 100));
+    b.style.height = pct + '%';
+    b.style.background = v > max * 0.6 ? 'var(--teal)' : v > max * 0.1 ? 'var(--teal-light)' : 'var(--cream2)';
+  });
+}
+
+// Build activity bars
+(function initBars() {
+  const c = document.getElementById('actBars');
+  for (let i = 0; i < 30; i++) {
+    const b = document.createElement('div');
+    b.className = 'act-bar';
+    b.style.height = '8%';
+    b.style.background = 'var(--cream2)';
+    c.appendChild(b);
+  }
+})();
+
+// === ACHIEVEMENTS ===
+(function initAchievements() {
+  const row = document.getElementById('achRow');
+  ACHIEVEMENTS.forEach(a => {
+    const badge = document.createElement('div');
+    badge.className = 'ach-badge locked';
+    badge.id = 'ach_' + a.id;
+    badge.title = a.name + ': ' + a.desc;
+    badge.textContent = a.emoji;
+    row.appendChild(badge);
+  });
+})();
+
+function checkAchievement(id) {
+  if (state.achievements[id]) return;
+  state.achievements[id] = true;
+  const el = document.getElementById('ach_' + id);
+  if (el) el.className = 'ach-badge unlocked';
+  const ach = ACHIEVEMENTS.find(a => a.id === id);
+  if (ach) showToast('Achievement: ' + ach.name + ' ' + ach.emoji, 'celebrate', '🏅');
+}
+
+// === TOAST SYSTEM ===
+function showToast(msg, type = 'info', icon = '💬') {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(() => {
+    t.style.animation = 'toastOut 0.3s ease forwards';
+    setTimeout(() => t.remove(), 300);
+  }, 3500);
+}
+
+// === CONFETTI ===
+function triggerConfetti() {
+  const overlay = document.getElementById('celebOverlay');
+  overlay.style.display = 'block';
+  const colors = ['#2DBD8F','#FFB347','#5BB8F5','#FF7A6B','#B8A9F8','#FFD700'];
+  for (let i = 0; i < 60; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.top = '-20px';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.width = (6 + Math.random() * 8) + 'px';
+    p.style.height = (6 + Math.random() * 8) + 'px';
+    p.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+    p.style.animationDelay = Math.random() * 0.8 + 's';
+    overlay.appendChild(p);
+  }
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    overlay.innerHTML = '';
+  }, 4000);
+}
+
+// === INIT ===
+window.addEventListener('resize', resizeCanvas);
+setTimeout(() => {
+  resizeCanvas();
+  updatePanda();
+  setPandaState('idle');
+}, 200);
+</script>
+</body>
+</html>
